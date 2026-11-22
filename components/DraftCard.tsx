@@ -1,8 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import posthog from "posthog-js";
 import { stripDocAnnotations } from "@/lib/annotations";
 import type { DraftResponse } from "@/lib/types";
+
+const analyticsEnabled = Boolean(
+  process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+    process.env.NEXT_PUBLIC_POSTHOG_HOST,
+);
 
 function wordCount(text: string): number {
   return text.trim() ? text.trim().split(/\s+/).length : 0;
@@ -36,6 +42,12 @@ export function DraftCard({
   async function copy() {
     try {
       await navigator.clipboard.writeText(draftText);
+      if (analyticsEnabled && result) {
+        posthog.capture("draft_copied", {
+          product_id: result.productId,
+          verdict: result.verdict,
+        });
+      }
       setCopied(true);
     } catch {
       setCopied(false);

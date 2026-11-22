@@ -1,4 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { Output, generateText } from "ai";
+import { captureAiGeneration } from "@/instrumentation";
 import { DRAFTER_CHAIN, modelFor } from "./ai";
 import { stripDocAnnotations } from "./annotations";
 import { assertsAbsence, evidenceBacksAbsence } from "./claims";
@@ -20,16 +22,24 @@ function isRetryable(error: unknown): boolean {
   );
 }
 
-async function callWithFallback(prompt: string): Promise<{
+async function callWithFallback(
+  prompt: string,
+  traceId: string,
+): Promise<{
   object: DraftObject;
   modelId: string;
 }> {
   let lastError: unknown;
+  const input = [
+    { role: "system", content: SYSTEM_PROMPT },
+    { role: "user", content: prompt },
+  ];
 
   for (const modelId of DRAFTER_CHAIN) {
     for (let attempt = 0; attempt < 2; attempt++) {
+      const generationStarted = Date.now();
       try {
-        const { output } = await generateText({
+        const { output, usage } = await generateText({
           model: modelFor(modelId),
           output: Output.object({
             schema: DraftSchema,
@@ -42,8 +52,28 @@ async function callWithFallback(prompt: string): Promise<{
           temperature: 0,
           maxRetries: 0,
         });
+        captureAiGeneration({
+          traceId,
+          model: modelId,
+          input,
+          outputChoices: [
+            { role: "assistant", content: JSON.stringify(output) },
+          ],
+          inputTokens: usage.inputTokens ?? 0,
+          outputTokens: usage.outputTokens ?? 0,
+          latency: (Date.now() - generationStarted) / 1000,
+        });
         return { object: output as DraftObject, modelId };
       } catch (error) {
+        captureAiGeneration({
+          traceId,
+          model: modelId,
+          input,
+          outputChoices: [],
+          inputTokens: 0,
+          outputTokens: 0,
+          latency: (Date.now() - generationStarted) / 1000,
+        });
         lastError = error;
         if (!isRetryable(error) || attempt === 1) break;
         await sleep(1200 * (attempt + 1));
@@ -73,7 +103,8 @@ export async function generateDraft({
   const docText = buildDocBundle(product);
   const prompt = buildUserPrompt(product, message);
 
-  const { object, modelId } = await callWithFallback(prompt);
+  const traceId = randomUUID();
+  const { object, modelId } = await callWithFallback(prompt, traceId);
 
   const evidence = verifyEvidence(object.evidence ?? [], docText);
   let verdict = object.verdict;

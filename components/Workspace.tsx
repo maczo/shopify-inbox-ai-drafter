@@ -1,9 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import posthog from "posthog-js";
 import type { DraftResponse } from "@/lib/types";
 import { DraftCard } from "./DraftCard";
 import { ProductPicker, type PickerProduct } from "./ProductPicker";
+
+const analyticsEnabled = Boolean(
+  process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+    process.env.NEXT_PUBLIC_POSTHOG_HOST,
+);
+
+type DraftSource = "draft_button" | "keyboard_shortcut" | "regenerate";
 
 const EXAMPLES = [
   {
@@ -95,8 +103,11 @@ export function Workspace({ products }: { products: PickerProduct[] }) {
     return () => clearInterval(id);
   }, [loading]);
 
-  const draft = useCallback(async () => {
+  const draft = useCallback(async (source: DraftSource = "draft_button") => {
     if (!productId || !message.trim() || loading) return;
+    if (analyticsEnabled) {
+      posthog.capture("draft_requested", { product_id: productId, source });
+    }
     setLoading(true);
     setError(null);
     setResult(null);
@@ -111,10 +122,24 @@ export function Workspace({ products }: { products: PickerProduct[] }) {
       if (!res.ok) throw new Error(data.error ?? "Draft failed.");
       setResult(data);
       setDraftText(data.draft);
+      if (analyticsEnabled) {
+        posthog.capture("draft_generated", {
+          product_id: data.productId,
+          verdict: data.verdict,
+          downgraded: data.downgraded,
+          evidence_count: data.evidence.length,
+          verified_evidence_count: data.evidence.filter((item) => item.ok).length,
+          generation_ms: data.ms,
+          source,
+        });
+      }
       requestAnimationFrame(() =>
         resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
       );
     } catch (err) {
+      if (analyticsEnabled) {
+        posthog.capture("draft_failed", { product_id: productId, source });
+      }
       setError(err instanceof Error ? err.message : "Draft failed.");
     } finally {
       setLoading(false);
@@ -125,7 +150,7 @@ export function Workspace({ products }: { products: PickerProduct[] }) {
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
         event.preventDefault();
-        void draft();
+        void draft("keyboard_shortcut");
       }
     };
     window.addEventListener("keydown", onKey);
@@ -133,12 +158,21 @@ export function Workspace({ products }: { products: PickerProduct[] }) {
   }, [draft]);
 
   function pickProduct(id: string) {
+    if (analyticsEnabled) {
+      posthog.capture("product_selected", { product_id: id });
+    }
     setManual(true);
     setDetected(null);
     setProductId(id);
   }
 
   function loadExample(example: (typeof EXAMPLES)[number]) {
+    if (analyticsEnabled) {
+      posthog.capture("example_loaded", {
+        example_label: example.label,
+        product_id: example.productId,
+      });
+    }
     setManual(true);
     setDetected(null);
     setProductId(example.productId);
@@ -289,7 +323,7 @@ export function Workspace({ products }: { products: PickerProduct[] }) {
             elapsed={elapsed}
             draftText={draftText}
             onChangeDraft={setDraftText}
-            onRegenerate={() => void draft()}
+            onRegenerate={() => void draft("regenerate")}
           />
         </section>
       </main>
