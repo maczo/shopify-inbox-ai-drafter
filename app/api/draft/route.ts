@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { flushPostHogAi } from "@/instrumentation";
 import { generateDraft } from "@/lib/drafter";
 
 export const runtime = "nodejs";
@@ -38,8 +39,10 @@ export async function POST(request: Request) {
       productId: productId.trim(),
       message: message.trim(),
     });
+    await flushPostHogAi();
     return NextResponse.json(result);
   } catch (error) {
+    await flushPostHogAi();
     const text =
       error instanceof Error ? error.message : "Something went wrong.";
     const isMissingKey = text.includes("OPENROUTER_API_KEY");
