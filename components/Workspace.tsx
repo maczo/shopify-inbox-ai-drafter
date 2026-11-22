@@ -105,7 +105,12 @@ export function Workspace({ products }: { products: PickerProduct[] }) {
       const res = await fetch("/api/draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, message }),
+        body: JSON.stringify({
+          productId,
+          message,
+          // The pilot runs on the dev store; every other store is off at the flag.
+          storeId: "inbox-ai-dev-store",
+        }),
       });
       const data = (await res.json()) as DraftResponse & { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Draft failed.");

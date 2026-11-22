@@ -13,7 +13,8 @@ export function assertFreeModel(id: string): void {
   }
 }
 
-const primary = process.env.DRAFTER_MODEL ?? "nvidia/nemotron-3.5-super-vl:free";
+const primary =
+  process.env.OPENROUTER_DRAFTER_MODEL ?? "nvidia/nemotron-3.5-super-vl:free";
 
 const fallbacks = (
   process.env.FALLBACK_MODELS ??

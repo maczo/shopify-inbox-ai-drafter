@@ -1,0 +1,17 @@
+Pilot event log verification
+===========================
+
+events                : 240
+ai_draft_created      : 120
+ai_draft_sent_unchanged: 118
+ai_draft_sent_edited  : 0
+ai_draft_discarded    : 2
+unedited send rate    : 98.3% (target >= 60%)
+
+flag                  : $feature/inbox-ai-reply-drafter = true on every event
+timestamps            : 2026-11-22T13:22:17Z .. 2026-11-22T13:36:41Z
+
+pilot window           : 2026-11-27T00:00:00Z .. 2026-12-02T23:59:59Z
+window check           : DEVIATION - 240 events fall outside the window (recorded at true capture time, not adjusted)
+
+schema + completeness  : PASS

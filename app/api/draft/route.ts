@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateDraft } from "@/lib/drafter";
+import { isDrafterEnabled } from "@/lib/flags";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -12,9 +13,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { productId, message } = (body ?? {}) as {
+  const { productId, message, storeId } = (body ?? {}) as {
     productId?: unknown;
     message?: unknown;
+    storeId?: unknown;
   };
 
   if (typeof productId !== "string" || !productId.trim()) {
@@ -30,6 +32,27 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "That message is too long (2000 characters max)." },
       { status: 400 },
+    );
+  }
+
+  // ---------------------------------------------------------------- the gate
+  //
+  // The tracking plan is explicit: the flag is checked on the server on every
+  // draft request, and hiding the UI in the browser is not enough on its own.
+  // No store, no flag, or a PostHog failure all mean OFF: no model call, and
+  // no draft written.
+  const store = typeof storeId === "string" ? storeId.trim() : "";
+  const decision = await isDrafterEnabled(store);
+
+  if (!decision.on) {
+    return NextResponse.json(
+      {
+        error:
+          "The AI reply drafter is not enabled for this store. No draft was generated.",
+        flag: { key: "inbox-ai-reply-drafter", store: decision.store, on: false },
+        reason: decision.reason,
+      },
+      { status: 503 },
     );
   }
 

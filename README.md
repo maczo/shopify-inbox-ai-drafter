@@ -98,9 +98,14 @@ scripts/
   eval.ts                  golden-set evaluation over HTTP
   grade.ts                 all 120 rows: draft + independent judge
   report.ts                renders REPORT.md + ledger.csv, gated
+  replay-pilot.ts          replays 120 through the gated endpoint
+  verify-pilot.ts          validates the event log against the plan
   make-promptfoo.ts        generates the promptfoo harness from data
 promptfoo/
   promptfooconfig.yaml     generated, 120 tests
+pilot/
+  events.jsonl             the pilot event log
+  verification.txt         verifier output
 reports/
   REPORT.md                generated grading report
   ledger.csv               one row per question, joinable on question_id
@@ -121,6 +126,42 @@ sample data. `npm run ingest` regenerates `data/*.json` from them.
 the product sheet and against this app's absence policy. The other 87 rows in the
 question CSV are inconsistent — see
 [`docs/eval-sheet-issues.md`](docs/eval-sheet-issues.md).
+
+## Pilot (Phase 3)
+
+The drafter is gated by a PostHog feature flag, scoped to the dev store.
+
+- **Flag:** `inbox-ai-reply-drafter`, group type `store`, group key
+  `inbox-ai-dev-store` at 100%, every other store at 0%.
+- **Enforced server-side:** `app/api/draft/route.ts` checks the flag before the
+  model call. Off, unreachable or missing key means `503`, no draft, no event.
+  Hiding the UI in the browser is not the gate.
+- **Fail closed:** `lib/flags.ts` treats any non-explicit "enabled" as off, so a
+  PostHog outage cannot unlock the drafter.
+
+```bash
+npm run build && npm start   # terminal 1
+npm run pilot                # terminal 2 — replays all 120, writes pilot/events.jsonl
+npm run pilot:verify         # validates the log, refuses to pass on a bad one
+```
+
+`pilot/events.jsonl` holds the event log and `pilot/verification.txt` the check
+result. The verifier enforces the tracking plan's schema and completeness rule:
+120 `ai_draft_created`, one per question, with outcomes summing to the same 120.
+
+**Outcomes are assigned by rule, not observed.** A replay has no merchant
+sending anything, so each reply is marked `ai_draft_sent_unchanged` if it passes
+the deterministic sendability checks, otherwise `ai_draft_discarded`. The event
+schema forbids extra properties, so this is disclosed in the commit message and
+here rather than encoded in the payload.
+
+### Environment
+
+| Variable | Purpose |
+| --- | --- |
+| `POSTHOG_API_KEY` | Project key. Read from the environment, never committed. |
+| `POSTHOG_HOST` | `https://us.i.posthog.com` (US Cloud). |
+| `OPENROUTER_DRAFTER_MODEL` | Model id recorded on every event. Not hardcoded. |
 
 ## Evaluation
 

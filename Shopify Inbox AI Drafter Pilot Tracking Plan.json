@@ -1,0 +1,380 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:shopify:inbox:tracking-plan:inbox-ai-reply-drafter:v1",
+  "title": "Shopify Inbox AI Drafter Pilot Tracking Plan",
+  "description": "PostHog event contract for the inbox-ai-reply-drafter pilot on the Shopify Inbox dev store. Engineering and Data & Analytics agree on it before the pilot ships. Every capture call sends the four event names and property names exactly as spelled here. The ship-or-stop memo joins on these names. A tracking plan is the agreed list of event names and properties that analytics will query.",
+  "x-owner": "Nadia Kowalczyk, Product Analyst, Data & Analytics",
+  "x-flag_owner": "Samuel Okafor, Experimentation Platform Engineer, Data & Analytics",
+  "x-code_reviewer": "Erik Vogt, Product Engineer, Merchant Experience",
+  "x-flag_signoff": "Marcus Oduya, Engineering Manager, Shopify Inbox, by 2026-11-27",
+  "x-pilot_window": {
+    "start": "2026-11-27",
+    "end": "2026-12-02",
+    "note": "The pilot replays all 120 shopper questions, Q-001 to Q-120 from shopify_inbox_shopper_questions.csv. They must be logged by 2026-12-02."
+  },
+  "x-currency": "USD",
+  "x-version": "1.0",
+  "x-last_reviewed": "2026-11-16",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["feature_flag", "events", "metrics", "example_payload"],
+  "$defs": {
+    "feature_flag": {
+      "type": "object",
+      "description": "The PostHog feature flag that gates the drafter. A feature flag is an on-off switch that PostHog evaluates for each request.",
+      "additionalProperties": false,
+      "required": ["key", "owner", "targeting", "enforced_where"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "const": "inbox-ai-reply-drafter",
+          "description": "Flag key. Use this exact spelling in PostHog and in the server check."
+        },
+        "owner": {
+          "type": "string",
+          "const": "Samuel Okafor",
+          "description": "Creates and scopes the flag through the PostHog MCP server."
+        },
+        "targeting": {
+          "type": "object",
+          "description": "Release conditions. The flag uses group targeting: PostHog decides the flag per store, not per person, so every flag check and capture call must pass the store group.",
+          "additionalProperties": false,
+          "required": [
+            "group_type",
+            "group_key",
+            "rollout_percentage_in_group",
+            "rollout_percentage_everyone_else",
+            "note"
+          ],
+          "properties": {
+            "group_type": {
+              "type": "string",
+              "const": "store"
+            },
+            "group_key": {
+              "type": "string",
+              "const": "inbox-ai-dev-store"
+            },
+            "rollout_percentage_in_group": {
+              "type": "integer",
+              "const": 100
+            },
+            "rollout_percentage_everyone_else": {
+              "type": "integer",
+              "const": 0
+            },
+            "note": {
+              "type": "string",
+              "const": "On for the dev store group only. 0% for every other store. A 100% rollout to everyone is wrong, and the flag must not ship that way."
+            }
+          }
+        },
+        "enforced_where": {
+          "type": "string",
+          "const": "server: checked on every draft request; client only hides UI",
+          "description": "The Next.js server route checks the flag before it calls the model. If the flag is off, no draft is written and no event fires. Hiding the reply box in the browser is not enough on its own."
+        }
+      }
+    },
+    "pilot_event": {
+      "type": "object",
+      "description": "Properties sent with every pilot event from posthog-node. The PostHog project key is read from the environment and is never committed. PostHog adds its own $-prefixed properties when it ingests an event. Those are not part of this contract.",
+      "additionalProperties": false,
+      "required": [
+        "event",
+        "question_id",
+        "product_id",
+        "timestamp",
+        "draft_text",
+        "sent_text",
+        "model_id",
+        "$feature/inbox-ai-reply-drafter"
+      ],
+      "properties": {
+        "event": {
+          "type": "string",
+          "enum": [
+            "ai_draft_created",
+            "ai_draft_sent_unchanged",
+            "ai_draft_sent_edited",
+            "ai_draft_discarded"
+          ],
+          "description": "Event name. It is also stored as a property so that exports carry it as a join column."
+        },
+        "question_id": {
+          "type": "string",
+          "pattern": "^Q-\\d{3}$",
+          "description": "Shopper question being answered, Q-001 to Q-120.",
+          "x-joins_to": "shopify_inbox_shopper_questions.csv.question_id"
+        },
+        "product_id": {
+          "type": "string",
+          "pattern": "^DSP-\\d{3}$",
+          "description": "Dev store product the question is about, DSP-001 to DSP-040. It must match the product_id on that question's row.",
+          "x-joins_to": "shopify_dev_store_products_nov2026.csv.product_id"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+          "description": "ISO 8601 in UTC with a trailing Z. The value falls inside the pilot window, 2026-11-27 to 2026-12-02."
+        },
+        "draft_text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The full reply the drafter put in the reply box, exactly as returned. Send the same value on all four events for a given draft."
+        },
+        "sent_text": {
+          "type": ["string", "null"],
+          "description": "The text the merchant actually sent. It is null on ai_draft_created and ai_draft_discarded. It is a string on both sent events."
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "OpenRouter model id the drafter used, read from the OPENROUTER_DRAFTER_MODEL env var at request time. Never hardcode it. It is not the promptfoo judge model."
+        },
+        "$feature/inbox-ai-reply-drafter": {
+          "type": "boolean",
+          "const": true,
+          "description": "Flag value at capture time. Every pilot event carries true. The metric filters on it."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "event": { "enum": ["ai_draft_created", "ai_draft_discarded"] }
+            }
+          },
+          "then": {
+            "properties": { "sent_text": { "type": "null" } }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event": { "enum": ["ai_draft_sent_unchanged", "ai_draft_sent_edited"] }
+            }
+          },
+          "then": {
+            "properties": { "sent_text": { "type": "string", "minLength": 1 } }
+          }
+        }
+      ]
+    },
+    "fires_when": {
+      "type": "object",
+      "description": "One trigger rule for each event. Each draft fires exactly one ai_draft_created event, then exactly one of the other three.",
+      "additionalProperties": false,
+      "required": [
+        "ai_draft_created",
+        "ai_draft_sent_unchanged",
+        "ai_draft_sent_edited",
+        "ai_draft_discarded"
+      ],
+      "properties": {
+        "ai_draft_created": {
+          "type": "string",
+          "const": "the drafter returns a draft into the reply box"
+        },
+        "ai_draft_sent_unchanged": {
+          "type": "string",
+          "const": "sent_text is byte-identical to draft_text"
+        },
+        "ai_draft_sent_edited": {
+          "type": "string",
+          "const": "sent_text differs from draft_text in any character"
+        },
+        "ai_draft_discarded": {
+          "type": "string",
+          "const": "the draft is cleared or replaced without sending"
+        }
+      }
+    },
+    "event_definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event", "fires_when", "required_properties", "sent_text_rule"],
+      "properties": {
+        "event": { "type": "string" },
+        "fires_when": { "type": "string" },
+        "required_properties": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "sent_text_rule": { "type": "string", "enum": ["null", "string"] }
+      }
+    }
+  },
+  "properties": {
+    "feature_flag": {
+      "$ref": "#/$defs/feature_flag"
+    },
+    "events": {
+      "type": "array",
+      "description": "The four pilot events in the order they can fire. Each event's payload must validate against #/$defs/pilot_event.",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": false,
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/event_definition",
+          "properties": {
+            "event": { "const": "ai_draft_created" },
+            "fires_when": { "const": "the drafter returns a draft into the reply box" },
+            "required_properties": {
+              "const": [
+                "question_id",
+                "product_id",
+                "event",
+                "timestamp",
+                "draft_text",
+                "sent_text",
+                "model_id",
+                "$feature/inbox-ai-reply-drafter"
+              ]
+            },
+            "sent_text_rule": { "const": "null" }
+          }
+        },
+        {
+          "$ref": "#/$defs/event_definition",
+          "properties": {
+            "event": { "const": "ai_draft_sent_unchanged" },
+            "fires_when": { "const": "sent_text is byte-identical to draft_text" },
+            "required_properties": {
+              "const": [
+                "question_id",
+                "product_id",
+                "event",
+                "timestamp",
+                "draft_text",
+                "sent_text",
+                "model_id",
+                "$feature/inbox-ai-reply-drafter"
+              ]
+            },
+            "sent_text_rule": { "const": "string" }
+          }
+        },
+        {
+          "$ref": "#/$defs/event_definition",
+          "properties": {
+            "event": { "const": "ai_draft_sent_edited" },
+            "fires_when": { "const": "sent_text differs from draft_text in any character" },
+            "required_properties": {
+              "const": [
+                "question_id",
+                "product_id",
+                "event",
+                "timestamp",
+                "draft_text",
+                "sent_text",
+                "model_id",
+                "$feature/inbox-ai-reply-drafter"
+              ]
+            },
+            "sent_text_rule": { "const": "string" }
+          }
+        },
+        {
+          "$ref": "#/$defs/event_definition",
+          "properties": {
+            "event": { "const": "ai_draft_discarded" },
+            "fires_when": { "const": "the draft is cleared or replaced without sending" },
+            "required_properties": {
+              "const": [
+                "question_id",
+                "product_id",
+                "event",
+                "timestamp",
+                "draft_text",
+                "sent_text",
+                "model_id",
+                "$feature/inbox-ai-reply-drafter"
+              ]
+            },
+            "sent_text_rule": { "const": "null" }
+          }
+        }
+      ]
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unedited_send_rate"],
+      "properties": {
+        "unedited_send_rate": {
+          "type": "object",
+          "description": "Launch bar 1. It is read from PostHog event counts, never typed by hand.",
+          "additionalProperties": false,
+          "required": [
+            "launch_bar_id",
+            "formula",
+            "numerator",
+            "denominator",
+            "filter",
+            "target",
+            "completeness_check"
+          ],
+          "properties": {
+            "launch_bar_id": {
+              "type": "string",
+              "const": "unedited_send_rate"
+            },
+            "formula": {
+              "type": "string",
+              "const": "count(ai_draft_sent_unchanged) / count(ai_draft_created), filtered on $feature/inbox-ai-reply-drafter = true"
+            },
+            "numerator": {
+              "type": "string",
+              "const": "count(ai_draft_sent_unchanged)"
+            },
+            "denominator": {
+              "type": "string",
+              "const": "count(ai_draft_created)"
+            },
+            "filter": {
+              "type": "string",
+              "const": "$feature/inbox-ai-reply-drafter = true, timestamp from 2026-11-27T00:00:00Z to 2026-12-02T23:59:59Z"
+            },
+            "target": {
+              "type": "string",
+              "const": ">= 0.60"
+            },
+            "completeness_check": {
+              "type": "string",
+              "const": "count(ai_draft_created) = 120, with one per question_id Q-001 to Q-120. count(ai_draft_sent_unchanged) + count(ai_draft_sent_edited) + count(ai_draft_discarded) = count(ai_draft_created). If either check fails, fix the log before you report the rate."
+            }
+          }
+        }
+      }
+    },
+    "example_payload": {
+      "type": "object",
+      "description": "Reference shape for one ai_draft_created row. Your PostHog rows should match its property names, formats and the null sent_text. draft_text is illustrative: your row holds whatever the drafter returned for Q-001. model_id holds the resolved value of the env var.",
+      "additionalProperties": false,
+      "required": ["ai_draft_created"],
+      "properties": {
+        "ai_draft_created": {
+          "$ref": "#/$defs/pilot_event"
+        }
+      },
+      "examples": [
+        {
+          "ai_draft_created": {
+            "event": "ai_draft_created",
+            "question_id": "Q-001",
+            "product_id": "DSP-003",
+            "timestamp": "2026-11-27T15:04:12Z",
+            "draft_text": "Thanks for asking. Yes, this balm contains sweet almond oil (Prunus Amygdalus Dulcis Oil), so please avoid it if you have a nut allergy.",
+            "sent_text": null,
+            "model_id": "${OPENROUTER_DRAFTER_MODEL}",
+            "$feature/inbox-ai-reply-drafter": true
+          }
+        }
+      ]
+    }
+  }
+}
