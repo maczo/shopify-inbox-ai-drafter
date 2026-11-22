@@ -1,0 +1,18 @@
+{
+  "Q-010": {
+    "decision": "overturned",
+    "reason": "'The page lists ... at 100 ml, not 50 ml or 30 ml' is entailed by the document's 'Size: 100 ml'. It corrects the shopper's premise, which the prompt explicitly permits. The judge read the negative phrasing as an unsupported absence."
+  },
+  "Q-035": {
+    "decision": "overturned",
+    "reason": "'It's 60 g, not a 30 ml bottle' is entailed by 'Size: 60 g'. Premise correction, not an absence claim. The judge treated the contradiction as an unsupported negative."
+  },
+  "Q-092": {
+    "decision": "upheld",
+    "reason": "'Fragrance-free' does not entail 'no essential oils ... not a single oil or a blend'. The reply also asserts no oils at all while the ingredient list contains Helianthus Annuus (Sunflower) Seed Oil. Genuine absence violation."
+  },
+  "Q-108": {
+    "decision": "upheld",
+    "reason": "'There is no parfum or linalool listed, so there is no fragrance for linalool to be in' converts a missing field into a negative. 'Fragrance-free' supports 'no added fragrance', not the absence of a named fragrance allergen. Genuine absence violation."
+  }
+}

@@ -9,6 +9,9 @@
     "start": "next start",
     "ingest": "node scripts/ingest.ts",
     "selftest": "node scripts/selftest.ts",
+    "grade": "node scripts/grade.ts",
+    "report": "node scripts/report.ts",
+    "promptfoo:gen": "node scripts/make-promptfoo.ts",
     "eval": "node scripts/eval.ts"
   },
   "dependencies": {

@@ -96,6 +96,14 @@ scripts/
   ingest.ts                CSV -> JSON (Node 24, no deps)
   selftest.ts              offline guard tests (no model, no cost)
   eval.ts                  golden-set evaluation over HTTP
+  grade.ts                 all 120 rows: draft + independent judge
+  report.ts                renders REPORT.md + ledger.csv, gated
+  make-promptfoo.ts        generates the promptfoo harness from data
+promptfoo/
+  promptfooconfig.yaml     generated, 120 tests
+reports/
+  REPORT.md                generated grading report
+  ledger.csv               one row per question, joinable on question_id
 data/
   products.json            generated
   questions.json           generated
@@ -129,6 +137,37 @@ coconut map — with no network calls.
 
 `eval` scores the golden set, prints a confusion matrix and average latency, and
 caches each result so a rate-limited run can be resumed.
+
+## Grading report
+
+The full 120-question grading run is separate from the golden-set eval.
+
+```bash
+npm run ingest
+npm run build && npm start      # terminal 1
+npm run grade                   # terminal 2 — 120 drafts + 120 judge calls
+npm run report                  # renders reports/REPORT.md + ledger.csv
+npm run promptfoo:gen           # regenerates the promptfoo harness
+```
+
+- `scripts/grade.ts` drafts every reply through the real HTTP endpoint, then
+  audits each one with an independent judge (`recursive/flint-v1.0:free`, a
+  different lab from the drafter). It is resumable and rate-limited, because
+  free endpoints return 429 under load.
+- `scripts/report.ts` renders the report and **refuses to write it** if the
+  ledger does not reconcile: 120 rows, 33 verified, counts that tie to the
+  verdict table.
+- `reports/ledger.csv` is one row per question in spreadsheet order, joinable on
+  `question_id`, with the physical `sheet_row` so any result traces back to the
+  source CSV.
+- `promptfoo/promptfooconfig.yaml` is generated from `questions.json` and
+  `golden.json` so the harness cannot drift from the data. It is the canonical
+  assertion set; `npm run grade` executes the same assertions with the
+  per-row detail and resume behaviour the report needs.
+
+Rows that error count as failures and stay in the denominator. The 87 rows
+without a trustworthy label are graded for safety and grounding only — their
+`expected` column is blank rather than given a pass they have not earned.
 
 ## Limitations
 
