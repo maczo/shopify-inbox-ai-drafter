@@ -1,0 +1,200 @@
+[
+  {
+    "questionId": "Q-029",
+    "productId": "DSP-005",
+    "verdict": "answered",
+    "note": "verified: page states the asked fact"
+  },
+  {
+    "questionId": "Q-032",
+    "productId": "DSP-027",
+    "verdict": "answered",
+    "note": "verified: page states the asked fact"
+  },
+  {
+    "questionId": "Q-033",
+    "productId": "DSP-019",
+    "verdict": "answered",
+    "note": "verified: page states the asked fact"
+  },
+  {
+    "questionId": "Q-049",
+    "productId": "DSP-022",
+    "verdict": "answered",
+    "note": "verified: page states the asked fact"
+  },
+  {
+    "questionId": "Q-052",
+    "productId": "DSP-011",
+    "verdict": "answered",
+    "note": "verified: page states the asked fact"
+  },
+  {
+    "questionId": "Q-064",
+    "productId": "DSP-004",
+    "verdict": "answered",
+    "note": "verified: page states the asked fact"
+  },
+  {
+    "questionId": "Q-076",
+    "productId": "DSP-004",
+    "verdict": "answered",
+    "note": "verified: page states the asked fact"
+  },
+  {
+    "questionId": "Q-087",
+    "productId": "DSP-004",
+    "verdict": "answered",
+    "note": "verified: page states the asked fact"
+  },
+  {
+    "questionId": "Q-101",
+    "productId": "DSP-012",
+    "verdict": "answered",
+    "note": "verified: page states the asked fact"
+  },
+  {
+    "questionId": "Q-027",
+    "productId": "DSP-011",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-030",
+    "productId": "DSP-014",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-041",
+    "productId": "DSP-014",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-047",
+    "productId": "DSP-002",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-048",
+    "productId": "DSP-040",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-054",
+    "productId": "DSP-007",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-062",
+    "productId": "DSP-025",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-069",
+    "productId": "DSP-021",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-072",
+    "productId": "DSP-040",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-082",
+    "productId": "DSP-009",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-085",
+    "productId": "DSP-026",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-086",
+    "productId": "DSP-011",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-088",
+    "productId": "DSP-020",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-089",
+    "productId": "DSP-029",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-090",
+    "productId": "DSP-013",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-093",
+    "productId": "DSP-006",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-097",
+    "productId": "DSP-010",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-099",
+    "productId": "DSP-040",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-103",
+    "productId": "DSP-015",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-106",
+    "productId": "DSP-004",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-107",
+    "productId": "DSP-018",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-115",
+    "productId": "DSP-029",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-116",
+    "productId": "DSP-019",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  },
+  {
+    "questionId": "Q-119",
+    "productId": "DSP-038",
+    "verdict": "flagged",
+    "note": "verified: page is silent on the asked fact"
+  }
+]
