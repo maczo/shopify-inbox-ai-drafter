@@ -6,6 +6,12 @@ when the page doesn't cover it.
 
 No invented prices, no invented policies, no guesses dressed up as answers.
 
+## Ship or stop
+
+The launch decision for the 11 December 2026 review is recorded in
+[`SHIP-OR-STOP.md`](SHIP-OR-STOP.md): **STOP**, with the three launch-bar
+numbers, their sources, and the single change required before the next review.
+
 ## How the guarantee works
 
 Three layers, in order of severity:
